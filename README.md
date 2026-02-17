@@ -202,7 +202,7 @@ This package automatically handles correct request formatting.
 Clone repository:
 
 ```bash
-git clone https://github.com/yourusername/n8n-nodes-callerdesk.git
+git clone https://github.com/YadavAnuj1888/n8n-nodes-callerdesk.git
 cd n8n-nodes-callerdesk
 npm install
 npm run build
