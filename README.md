@@ -1,4 +1,8 @@
 # n8n-nodes-callerdesk
+![npm](https://img.shields.io/npm/v/n8n-nodes-callerdesk)
+![downloads](https://img.shields.io/npm/dm/n8n-nodes-callerdesk)
+![license](https://img.shields.io/npm/l/n8n-nodes-callerdesk)
+
 
 Official **CallerDesk integration for n8n** providing call automation, contact management, reporting, and webhook handling.
 
