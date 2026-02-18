@@ -20,8 +20,8 @@ export class CallerDeskApi implements ICredentialType {
 			},
 			default: '',
 			required: true,
-			placeholder: '286dff4b98f8b5054f95d860329553e7',
-			description: 'Your CallerDesk API authentication code',
+			placeholder: 'Enter your CallerDesk API auth code',
+			description: 'Authentication code provided by CallerDesk',
 		},
 
 		{
