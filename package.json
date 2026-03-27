@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-callerdesk",
-  "version": "0.1.14",
+  "version": "0.1.13",
   "description": "CallerDesk native node for n8n",
   "keywords": [
     "n8n-community-node-package",
@@ -11,11 +11,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anujkumar-1011/n8n-nodes-callerdesk.git"
+    "url": "git+https://github.com/YadavAnuj1888/n8n-workflow.git"
   },
-  "homepage": "https://github.com/anujkumar-1011/n8n-nodes-callerdesk#readme",
+  "homepage": "https://github.com/YadavAnuj1888/n8n-workflow#readme",
   "bugs": {
-    "url": "https://github.com/anujkumar-1011/n8n-nodes-callerdesk/issues"
+    "url": "https://github.com/YadavAnuj1888/n8n-workflow/issues"
   },
   "main": "dist/index.js",
   "files": [
