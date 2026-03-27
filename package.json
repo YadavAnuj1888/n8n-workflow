@@ -9,6 +9,14 @@
     "telephony"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anujkumar-1011/n8n-nodes-callerdesk.git"
+  },
+  "homepage": "https://github.com/anujkumar-1011/n8n-nodes-callerdesk#readme",
+  "bugs": {
+    "url": "https://github.com/anujkumar-1011/n8n-nodes-callerdesk/issues"
+  },
   "main": "dist/index.js",
   "files": [
     "dist"
