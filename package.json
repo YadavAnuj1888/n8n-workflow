@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-callerdesk",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "CallerDesk native node for n8n",
   "keywords": [
     "n8n-community-node-package",
@@ -20,14 +20,6 @@
   "author": {
     "name": "Anuj Kumar",
     "email": "anujy5706@gmail.com"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/YadavAnuj1888/n8n-nodes-callerdesk"
-  },
-  "homepage": "https://github.com/YadavAnuj1888/n8n-nodes-callerdesk",
-  "bugs": {
-    "url": "https://github.com/YadavAnuj1888/n8n-nodes-callerdesk/issues"
   },
   "n8n": {
     "n8nNodesApiVersion": 1,
