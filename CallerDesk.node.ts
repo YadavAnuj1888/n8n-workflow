@@ -5,6 +5,7 @@ import {
     INodeExecutionData,
     NodeConnectionTypes,
     NodeApiError,
+    IHttpRequestOptions,
 } from 'n8n-workflow';
 
 export class CallerDesk implements INodeType {
@@ -28,6 +29,7 @@ export class CallerDesk implements INodeType {
                 displayName: 'Resource',
                 name: 'resource',
                 type: 'options',
+                noDataExpression: true,
                 options: [
                     { name: 'Calling', value: 'call' },
                     { name: 'Contacts', value: 'contact' },
@@ -35,14 +37,13 @@ export class CallerDesk implements INodeType {
                     { name: 'Reports', value: 'reports' },
                 ],
                 default: 'call',
-                noDataExpression: true,
             },
             {
                 displayName: 'Operation',
                 name: 'operation',
                 type: 'options',
-                default: 'click_to_call_v2',
                 noDataExpression: true,
+                default: 'click_to_call_v2',
                 displayOptions: { show: { resource: ['call'] } },
                 options: [
                     { name: 'Make (V2)', value: 'click_to_call_v2', action: 'Make a call v2' },
@@ -56,9 +57,9 @@ export class CallerDesk implements INodeType {
                 displayName: 'Operation',
                 name: 'operation',
                 type: 'options',
+                noDataExpression: true,
                 displayOptions: { show: { resource: ['contact'] } },
                 default: 'save_contact',
-                noDataExpression: true,
                 options: [
                     { name: 'Create', value: 'save_contact', action: 'Create a contact' },
                     { name: 'Get All', value: 'contact_list', action: 'Get all contacts' },
@@ -68,9 +69,9 @@ export class CallerDesk implements INodeType {
                 displayName: 'Operation',
                 name: 'operation',
                 type: 'options',
+                noDataExpression: true,
                 displayOptions: { show: { resource: ['member'] } },
                 default: 'add_member',
-                noDataExpression: true,
                 options: [
                     { name: 'Create', value: 'add_member', action: 'Create a team member' },
                 ],
@@ -79,9 +80,9 @@ export class CallerDesk implements INodeType {
                 displayName: 'Operation',
                 name: 'operation',
                 type: 'options',
+                noDataExpression: true,
                 displayOptions: { show: { resource: ['reports'] } },
                 default: 'app_call_list',
-                noDataExpression: true,
                 options: [
                     { name: 'App Calls', value: 'app_call_list', action: 'Get app call list' },
                     { name: 'Routing', value: 'routing_detail', action: 'Get routing details' },
@@ -118,9 +119,8 @@ export class CallerDesk implements INodeType {
         const returnData: INodeExecutionData[] = [];
 
         const credentials = await this.getCredentials('callerDeskApi');
-
+        const baseUrl = (credentials.baseUrl as string).replace(/\/$/, '');
         const authCode = credentials.authCode as string;
-        const baseUrl = (credentials.baseUrl as string).replace(/\/$/, ''); // strip trailing slash
 
         for (let i = 0; i < items.length; i++) {
 
@@ -129,12 +129,12 @@ export class CallerDesk implements INodeType {
                 const resource = this.getNodeParameter('resource', i) as string;
                 const operation = this.getNodeParameter('operation', i) as string;
 
-                let response: any;
+                let requestOptions: IHttpRequestOptions;
 
                 if (resource === 'call') {
 
                     if (operation === 'click_to_call_v2') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'GET',
                             url: `${baseUrl}/api/click_to_call_v2`,
                             qs: {
@@ -144,11 +144,9 @@ export class CallerDesk implements INodeType {
                                 call_from_did: this.getNodeParameter('call_from_did', i) ? 1 : 0,
                                 authcode: authCode,
                             },
-                        });
-                    }
-
-                    else if (operation === 'click_to_call_v3') {
-                        response = await this.helpers.httpRequest({
+                        };
+                    } else if (operation === 'click_to_call_v3') {
+                        requestOptions = {
                             method: 'GET',
                             url: `${baseUrl}/api/click_to_call_v3`,
                             qs: {
@@ -159,11 +157,9 @@ export class CallerDesk implements INodeType {
                                 call_from_did: this.getNodeParameter('call_from_did', i) ? 1 : 0,
                                 authcode: authCode,
                             },
-                        });
-                    }
-
-                    else if (operation === 'click_to_call_v4') {
-                        response = await this.helpers.httpRequest({
+                        };
+                    } else if (operation === 'click_to_call_v4') {
+                        requestOptions = {
                             method: 'GET',
                             url: `${baseUrl}/api/click_to_call_v4`,
                             qs: {
@@ -173,11 +169,9 @@ export class CallerDesk implements INodeType {
                                 call_from_did: this.getNodeParameter('call_from_did', i) ? 1 : 0,
                                 authcode: authCode,
                             },
-                        });
-                    }
-
-                    else if (operation === 'singleleg') {
-                        response = await this.helpers.httpRequest({
+                        };
+                    } else if (operation === 'singleleg') {
+                        requestOptions = {
                             method: 'POST',
                             url: `${baseUrl}/api/singleleg-clicktocall`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -187,22 +181,21 @@ export class CallerDesk implements INodeType {
                                 customer_number: this.getNodeParameter('customer_number', i) as string,
                                 callerid: this.getNodeParameter('callerid', i) as string,
                             }).toString(),
-                        });
-                    }
-
-                    else if (operation === 'live_call') {
-                        response = await this.helpers.httpRequest({
+                        };
+                    } else if (operation === 'live_call') {
+                        requestOptions = {
                             method: 'GET',
                             url: `${baseUrl}/api/live_call_v2`,
                             qs: { authcode: authCode },
-                        });
+                        };
+                    } else {
+                        throw new NodeApiError(this.getNode(), { message: `Unknown call operation: ${operation}` } as any);
                     }
-                }
 
-                else if (resource === 'contact') {
+                } else if (resource === 'contact') {
 
                     if (operation === 'save_contact') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'POST',
                             url: `${baseUrl}/api/savecontact_v2`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -213,21 +206,21 @@ export class CallerDesk implements INodeType {
                                 contact_email: this.getNodeParameter('contact_email', i) as string,
                                 contact_address: this.getNodeParameter('contact_address', i) as string,
                             }).toString(),
-                        });
-                    }
-
-                    else if (operation === 'contact_list') {
-                        response = await this.helpers.httpRequest({
+                        };
+                    } else if (operation === 'contact_list') {
+                        requestOptions = {
                             method: 'POST',
                             url: `${baseUrl}/api/contact_list_v2`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: new URLSearchParams({ authcode: authCode }).toString(),
-                        });
+                        };
+                    } else {
+                        throw new NodeApiError(this.getNode(), { message: `Unknown contact operation: ${operation}` } as any);
                     }
-                }
 
-                else if (resource === 'member') {
-                    response = await this.helpers.httpRequest({
+                } else if (resource === 'member') {
+
+                    requestOptions = {
                         method: 'POST',
                         url: `${baseUrl}/api/addmember_v2`,
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -238,38 +231,44 @@ export class CallerDesk implements INodeType {
                             access: this.getNodeParameter('access', i) as string,
                             active: this.getNodeParameter('active', i) as string,
                         }).toString(),
-                    });
-                }
+                    };
 
-                else if (resource === 'reports') {
+                } else if (resource === 'reports') {
 
                     if (operation === 'app_call_list') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'POST',
                             url: `${baseUrl}/api/app_call_list_v2`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: new URLSearchParams({ authcode: authCode }).toString(),
-                        });
-                    }
-
-                    else if (operation === 'routing_detail') {
-                        response = await this.helpers.httpRequest({
+                        };
+                    } else if (operation === 'routing_detail') {
+                        requestOptions = {
                             method: 'POST',
                             url: `${baseUrl}/api/getroutingdetail_V2`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: new URLSearchParams({ authcode: authCode }).toString(),
-                        });
+                        };
+                    } else {
+                        throw new NodeApiError(this.getNode(), { message: `Unknown reports operation: ${operation}` } as any);
                     }
+
+                } else {
+                    throw new NodeApiError(this.getNode(), { message: `Unknown resource: ${resource}` } as any);
                 }
+
+                const response = await this.helpers.httpRequestWithAuthentication.call(
+                    this,
+                    'callerDeskApi',
+                    requestOptions,
+                );
 
                 returnData.push({ json: response ?? {} });
 
             } catch (error) {
 
                 if (this.continueOnFail()) {
-                    returnData.push({
-                        json: { error: (error as Error).message },
-                    });
+                    returnData.push({ json: { error: (error as Error).message } });
                     continue;
                 }
 

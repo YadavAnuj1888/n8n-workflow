@@ -20,6 +20,7 @@ class CallerDesk {
                     displayName: 'Resource',
                     name: 'resource',
                     type: 'options',
+                    noDataExpression: true,
                     options: [
                         { name: 'Calling', value: 'call' },
                         { name: 'Contacts', value: 'contact' },
@@ -27,14 +28,13 @@ class CallerDesk {
                         { name: 'Reports', value: 'reports' },
                     ],
                     default: 'call',
-                    noDataExpression: true,
                 },
                 {
                     displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
-                    default: 'click_to_call_v2',
                     noDataExpression: true,
+                    default: 'click_to_call_v2',
                     displayOptions: { show: { resource: ['call'] } },
                     options: [
                         { name: 'Make (V2)', value: 'click_to_call_v2', action: 'Make a call v2' },
@@ -48,9 +48,9 @@ class CallerDesk {
                     displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
+                    noDataExpression: true,
                     displayOptions: { show: { resource: ['contact'] } },
                     default: 'save_contact',
-                    noDataExpression: true,
                     options: [
                         { name: 'Create', value: 'save_contact', action: 'Create a contact' },
                         { name: 'Get All', value: 'contact_list', action: 'Get all contacts' },
@@ -60,9 +60,9 @@ class CallerDesk {
                     displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
+                    noDataExpression: true,
                     displayOptions: { show: { resource: ['member'] } },
                     default: 'add_member',
-                    noDataExpression: true,
                     options: [
                         { name: 'Create', value: 'add_member', action: 'Create a team member' },
                     ],
@@ -71,9 +71,9 @@ class CallerDesk {
                     displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
+                    noDataExpression: true,
                     displayOptions: { show: { resource: ['reports'] } },
                     default: 'app_call_list',
-                    noDataExpression: true,
                     options: [
                         { name: 'App Calls', value: 'app_call_list', action: 'Get app call list' },
                         { name: 'Routing', value: 'routing_detail', action: 'Get routing details' },
@@ -103,16 +103,16 @@ class CallerDesk {
         const items = this.getInputData();
         const returnData = [];
         const credentials = await this.getCredentials('callerDeskApi');
+        const baseUrl = credentials.baseUrl.replace(/\/$/, '');
         const authCode = credentials.authCode;
-        const baseUrl = credentials.baseUrl.replace(/\/$/, ''); // strip trailing slash
         for (let i = 0; i < items.length; i++) {
             try {
                 const resource = this.getNodeParameter('resource', i);
                 const operation = this.getNodeParameter('operation', i);
-                let response;
+                let requestOptions;
                 if (resource === 'call') {
                     if (operation === 'click_to_call_v2') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'GET',
                             url: `${baseUrl}/api/click_to_call_v2`,
                             qs: {
@@ -122,10 +122,10 @@ class CallerDesk {
                                 call_from_did: this.getNodeParameter('call_from_did', i) ? 1 : 0,
                                 authcode: authCode,
                             },
-                        });
+                        };
                     }
                     else if (operation === 'click_to_call_v3') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'GET',
                             url: `${baseUrl}/api/click_to_call_v3`,
                             qs: {
@@ -136,10 +136,10 @@ class CallerDesk {
                                 call_from_did: this.getNodeParameter('call_from_did', i) ? 1 : 0,
                                 authcode: authCode,
                             },
-                        });
+                        };
                     }
                     else if (operation === 'click_to_call_v4') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'GET',
                             url: `${baseUrl}/api/click_to_call_v4`,
                             qs: {
@@ -149,10 +149,10 @@ class CallerDesk {
                                 call_from_did: this.getNodeParameter('call_from_did', i) ? 1 : 0,
                                 authcode: authCode,
                             },
-                        });
+                        };
                     }
                     else if (operation === 'singleleg') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'POST',
                             url: `${baseUrl}/api/singleleg-clicktocall`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -162,19 +162,22 @@ class CallerDesk {
                                 customer_number: this.getNodeParameter('customer_number', i),
                                 callerid: this.getNodeParameter('callerid', i),
                             }).toString(),
-                        });
+                        };
                     }
                     else if (operation === 'live_call') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'GET',
                             url: `${baseUrl}/api/live_call_v2`,
                             qs: { authcode: authCode },
-                        });
+                        };
+                    }
+                    else {
+                        throw new n8n_workflow_1.NodeApiError(this.getNode(), { message: `Unknown call operation: ${operation}` });
                     }
                 }
                 else if (resource === 'contact') {
                     if (operation === 'save_contact') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'POST',
                             url: `${baseUrl}/api/savecontact_v2`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -185,19 +188,22 @@ class CallerDesk {
                                 contact_email: this.getNodeParameter('contact_email', i),
                                 contact_address: this.getNodeParameter('contact_address', i),
                             }).toString(),
-                        });
+                        };
                     }
                     else if (operation === 'contact_list') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'POST',
                             url: `${baseUrl}/api/contact_list_v2`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: new URLSearchParams({ authcode: authCode }).toString(),
-                        });
+                        };
+                    }
+                    else {
+                        throw new n8n_workflow_1.NodeApiError(this.getNode(), { message: `Unknown contact operation: ${operation}` });
                     }
                 }
                 else if (resource === 'member') {
-                    response = await this.helpers.httpRequest({
+                    requestOptions = {
                         method: 'POST',
                         url: `${baseUrl}/api/addmember_v2`,
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -208,33 +214,38 @@ class CallerDesk {
                             access: this.getNodeParameter('access', i),
                             active: this.getNodeParameter('active', i),
                         }).toString(),
-                    });
+                    };
                 }
                 else if (resource === 'reports') {
                     if (operation === 'app_call_list') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'POST',
                             url: `${baseUrl}/api/app_call_list_v2`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: new URLSearchParams({ authcode: authCode }).toString(),
-                        });
+                        };
                     }
                     else if (operation === 'routing_detail') {
-                        response = await this.helpers.httpRequest({
+                        requestOptions = {
                             method: 'POST',
                             url: `${baseUrl}/api/getroutingdetail_V2`,
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: new URLSearchParams({ authcode: authCode }).toString(),
-                        });
+                        };
+                    }
+                    else {
+                        throw new n8n_workflow_1.NodeApiError(this.getNode(), { message: `Unknown reports operation: ${operation}` });
                     }
                 }
+                else {
+                    throw new n8n_workflow_1.NodeApiError(this.getNode(), { message: `Unknown resource: ${resource}` });
+                }
+                const response = await this.helpers.httpRequestWithAuthentication.call(this, 'callerDeskApi', requestOptions);
                 returnData.push({ json: response ?? {} });
             }
             catch (error) {
                 if (this.continueOnFail()) {
-                    returnData.push({
-                        json: { error: error.message },
-                    });
+                    returnData.push({ json: { error: error.message } });
                     continue;
                 }
                 throw new n8n_workflow_1.NodeApiError(this.getNode(), error);
