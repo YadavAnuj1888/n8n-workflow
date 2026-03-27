@@ -3,7 +3,10 @@
   "version": "0.1.9",
   "description": "CallerDesk native node for n8n",
   "keywords": [
-    "n8n-community-node-package"
+    "n8n-community-node-package",
+    "callerdesk",
+    "crm",
+    "telephony"
   ],
   "license": "MIT",
   "main": "dist/index.js",
@@ -11,7 +14,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && xcopy callerdesk.svg dist\\ /Y",
+    "build": "tsc && copy callerdesk.svg dist",
     "prepare": "npm run build"
   },
   "author": {
