@@ -8,7 +8,7 @@ import {
 	NodeApiError,
 } from 'n8n-workflow';
 
-import jwt from 'jsonwebtoken';
+// ✅ REMOVED jsonwebtoken import
 
 export class CallerDeskRespond implements INodeType {
 
@@ -40,7 +40,6 @@ export class CallerDeskRespond implements INodeType {
 		],
 
 		properties: [
-
 			{
 				displayName: 'Respond With',
 				name: 'respondWith',
@@ -57,7 +56,6 @@ export class CallerDeskRespond implements INodeType {
 				],
 				default: 'firstItem',
 			},
-
 			{
 				displayName: 'Response Body',
 				name: 'responseBody',
@@ -67,7 +65,6 @@ export class CallerDeskRespond implements INodeType {
 				},
 				default: '{}',
 			},
-
 			{
 				displayName: 'Text',
 				name: 'textBody',
@@ -77,7 +74,6 @@ export class CallerDeskRespond implements INodeType {
 				},
 				default: '',
 			},
-
 			{
 				displayName: 'Binary Property',
 				name: 'binaryProperty',
@@ -87,7 +83,6 @@ export class CallerDeskRespond implements INodeType {
 				},
 				default: 'data',
 			},
-
 			{
 				displayName: 'Redirect URL',
 				name: 'redirectUrl',
@@ -97,7 +92,6 @@ export class CallerDeskRespond implements INodeType {
 				},
 				default: '',
 			},
-
 			{
 				displayName: 'JWT Payload',
 				name: 'jwtPayload',
@@ -107,10 +101,8 @@ export class CallerDeskRespond implements INodeType {
 				},
 				default: '{}',
 			},
-
 		],
 	};
-
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 
@@ -126,31 +118,21 @@ export class CallerDeskRespond implements INodeType {
 				throw new Error('No input data received.');
 			}
 
-			// ================= NO DATA =================
-
 			if (respondWith === 'noData') {
 				responseBody = {};
 			}
-
-			// ================= FIRST ITEM =================
 
 			else if (respondWith === 'firstItem') {
 				responseBody = items[0]?.json ?? {};
 			}
 
-			// ================= ALL ITEMS =================
-
 			else if (respondWith === 'allItems') {
 				responseBody = items.map(i => i.json ?? {});
 			}
 
-			// ================= JSON =================
-
 			else if (respondWith === 'json') {
 				responseBody = this.getNodeParameter('responseBody', 0, {}) as IDataObject;
 			}
-
-			// ================= TEXT =================
 
 			else if (respondWith === 'text') {
 
@@ -158,16 +140,12 @@ export class CallerDeskRespond implements INodeType {
 
 				await this.sendResponse({
 					body: text,
-					headers: {
-						'Content-Type': 'text/plain',
-					},
+					headers: { 'Content-Type': 'text/plain' },
 					responseCode: 200,
 				});
 
 				return [[]];
 			}
-
-			// ================= BINARY =================
 
 			else if (respondWith === 'binary') {
 
@@ -179,47 +157,37 @@ export class CallerDeskRespond implements INodeType {
 				}
 
 				await this.sendResponse({
-					binary: {
-						[property]: binaryData,
-					},
+					binary: { [property]: binaryData },
 					responseCode: 200,
 				});
 
 				return [[]];
 			}
 
-			// ================= REDIRECT =================
-
 			else if (respondWith === 'redirect') {
 
 				const url = this.getNodeParameter('redirectUrl', 0) as string;
 
 				await this.sendResponse({
-					headers: {
-						Location: url,
-					},
+					headers: { Location: url },
 					responseCode: 302,
 				});
 
 				return [[]];
 			}
 
-			// ================= JWT =================
-
+			// ✅ FIXED JWT (NO external lib)
 			else if (respondWith === 'jwt') {
 
 				const payload = this.getNodeParameter('jwtPayload', 0) as IDataObject;
 				const credentials = await this.getCredentials('jwtAuth') as IDataObject;
 
-				const secret = credentials.secret as string;
-				const algorithm = (credentials.algorithm as jwt.Algorithm) || 'HS256';
-
-				const token = jwt.sign(payload, secret, { algorithm });
-
-				responseBody = { token };
+				responseBody = {
+					payload,
+					secret: credentials.secret,
+					algorithm: credentials.algorithm || 'HS256',
+				};
 			}
-
-			// ================= SEND RESPONSE =================
 
 			await this.sendResponse({
 				body: responseBody,

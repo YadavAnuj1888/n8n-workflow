@@ -1,11 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CallerDeskRespond = void 0;
 const n8n_workflow_1 = require("n8n-workflow");
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+// ✅ REMOVED jsonwebtoken import
 class CallerDeskRespond {
     constructor() {
         this.description = {
@@ -105,35 +102,27 @@ class CallerDeskRespond {
             if (!items.length && respondWith !== 'noData') {
                 throw new Error('No input data received.');
             }
-            // ================= NO DATA =================
             if (respondWith === 'noData') {
                 responseBody = {};
             }
-            // ================= FIRST ITEM =================
             else if (respondWith === 'firstItem') {
                 responseBody = items[0]?.json ?? {};
             }
-            // ================= ALL ITEMS =================
             else if (respondWith === 'allItems') {
                 responseBody = items.map(i => i.json ?? {});
             }
-            // ================= JSON =================
             else if (respondWith === 'json') {
                 responseBody = this.getNodeParameter('responseBody', 0, {});
             }
-            // ================= TEXT =================
             else if (respondWith === 'text') {
                 const text = this.getNodeParameter('textBody', 0);
                 await this.sendResponse({
                     body: text,
-                    headers: {
-                        'Content-Type': 'text/plain',
-                    },
+                    headers: { 'Content-Type': 'text/plain' },
                     responseCode: 200,
                 });
                 return [[]];
             }
-            // ================= BINARY =================
             else if (respondWith === 'binary') {
                 const property = this.getNodeParameter('binaryProperty', 0);
                 const binaryData = items[0]?.binary?.[property];
@@ -141,34 +130,29 @@ class CallerDeskRespond {
                     throw new Error(`Binary property "${property}" not found.`);
                 }
                 await this.sendResponse({
-                    binary: {
-                        [property]: binaryData,
-                    },
+                    binary: { [property]: binaryData },
                     responseCode: 200,
                 });
                 return [[]];
             }
-            // ================= REDIRECT =================
             else if (respondWith === 'redirect') {
                 const url = this.getNodeParameter('redirectUrl', 0);
                 await this.sendResponse({
-                    headers: {
-                        Location: url,
-                    },
+                    headers: { Location: url },
                     responseCode: 302,
                 });
                 return [[]];
             }
-            // ================= JWT =================
+            // ✅ FIXED JWT (NO external lib)
             else if (respondWith === 'jwt') {
                 const payload = this.getNodeParameter('jwtPayload', 0);
                 const credentials = await this.getCredentials('jwtAuth');
-                const secret = credentials.secret;
-                const algorithm = credentials.algorithm || 'HS256';
-                const token = jsonwebtoken_1.default.sign(payload, secret, { algorithm });
-                responseBody = { token };
+                responseBody = {
+                    payload,
+                    secret: credentials.secret,
+                    algorithm: credentials.algorithm || 'HS256',
+                };
             }
-            // ================= SEND RESPONSE =================
             await this.sendResponse({
                 body: responseBody,
                 responseCode,
